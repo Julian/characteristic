@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 Python attributes without boilerplate.
 """
 
+import sys
+
 
 __version__ = "14.0dev"
 __author__ = "Hynek Schlawack"
@@ -18,6 +20,15 @@ __all__ = [
     "with_init",
     "with_repr",
 ]
+
+
+# I'm sorry. :(
+if sys.version_info[0] == 2:
+    def exec_(code, locals_, globals_):
+        exec("exec code in locals_, globals_")
+else:  # pragma: no cover
+    def exec_(code, locals_, globals_):
+        exec(code, locals_, globals_)
 
 
 class _Nothing(object):
@@ -260,37 +271,53 @@ def with_init(attrs, defaults=None):
     :param defaults: Default values if attributes are omitted on instantiation.
     :type defaults: ``dict`` or ``None``
     """
-    if defaults is None:
-        defaults = {}
+    attrs = _ensure_attributes(attrs, defaults or {})
 
-    def init(self, *args, **kw):
-        """
-        Attribute initializer automatically created by characteristic.
-
-        The original `__init__` method is renamed to `__original_init__` and
-        is called at the end with the initialized attributes removed from the
-        keyword arguments.
-        """
-        for a in attrs:
-            v = kw.pop(a.name, NOTHING)
-            if v is NOTHING:
-                if a._default_value is not NOTHING:
-                    v = a._default_value
-                elif a._default_factory is not None:
-                    v = a._default_factory()
-            if v is NOTHING:
-                raise ValueError(
-                    "Missing keyword value for '{0}'.".format(a.name)
+    setters = []
+    for i, a in enumerate(attrs):
+        # attrs is passed into the the exec later to enable default_value
+        # and default_factory.  To find it, enumerate and 'i' are used.
+        setters.append(
+            "self.{0.name} = kw.pop('{0.name}', attrs[{1}]._default_value)"
+            .format(a, i)
+        )
+        if a._default_value is NOTHING:
+            # Can't use pop + big try/except because Python 2.6:
+            # http://bugs.python.org/issue10221
+            setters.append("if self.{0.name} is NOTHING:".format(a))
+            if a._default_factory is None:
+                setters.append(
+                    "     raise ValueError(\"Missing keyword value for "
+                    "'{0.name}'.\")".format(a),
                 )
-            setattr(self, a.name, v)
-        self.__original_init__(*args, **kw)
+            else:
+                setters.append(
+                    "    self.{0.name} = attrs[{1}]._default_factory()"
+                    .format(a, i)
+                )
+
+    script = """\
+def init(self, *args, **kw):
+    '''
+    Attribute initializer automatically created by characteristic.
+
+    The original `__init__` method is renamed to `__original_init__` and
+    is called at the end with the initialized attributes removed from the
+    keyword arguments.
+    '''
+    {setters}
+    self.__original_init__(*args, **kw)
+""".format(setters="\n    ".join(setters))
+    locs = {}
+    exec_(script, {"NOTHING": NOTHING, "attrs": attrs}, locs)
+    init = locs["init"]
 
     def wrap(cl):
         cl.__original_init__ = cl.__init__
+        init._script = script  # better for debugging
         cl.__init__ = init
         return cl
 
-    attrs = _ensure_attributes(attrs, defaults)
     return wrap
 
 

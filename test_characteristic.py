@@ -302,7 +302,21 @@ class TestWithInit(object):
             pass
         o1 = C()
         o2 = C()
+        assert o1.a == o2.a == []
         assert o1.a is not o2.a
+
+    def test_default_only_if_necessary(self):
+        """
+        Default value is only used if the value is actually missing.
+        """
+        @with_init([Attribute("a", default_value=42),
+                    Attribute("b", default_factory="abc")])
+        class C(object):
+            pass
+        o = object()
+        c = C(a=o, b=o)
+        assert c.a is o
+        assert c.b is o
 
 
 @attributes(["a", "b"], create_init=True)
