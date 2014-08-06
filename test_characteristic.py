@@ -341,15 +341,31 @@ class TestEnsureAttributes(object):
         List items that are an Attribute stay an Attribute.
         """
         a = Attribute("a")
-        assert a is _ensure_attributes([a])[0]
+        assert a is _ensure_attributes([a], {})[0]
 
     def test_converts_rest(self):
         """
         Any other item will be transformed into an Attribute.
         """
-        l = _ensure_attributes(["a"])
+        l = _ensure_attributes(["a"], {})
         assert isinstance(l[0], Attribute)
         assert "a" == l[0].name
+
+    def test_defaults(self):
+        """
+        Default values are applied to Attributes.
+        """
+        l = _ensure_attributes(["a"], {"a": 42})
+        assert isinstance(l[0], Attribute)
+        assert 42 == l[0]._default_value
+
+    def test_mix_defaults(self):
+        """
+        Raises ValueError if an Attribute is passed and defaults isn't empty.
+        """
+        with pytest.raises(ValueError) as e:
+            _ensure_attributes(["a", Attribute("b")], {"a": 42})
+        assert "Mixing" in e.value.args[0]
 
 
 def test_nothing():
