@@ -69,7 +69,7 @@ class Attribute(object):
 
     .. versionadded:: 14.0
     """
-    __slots__ = ["name", "_default", "_default_factory"]
+    __slots__ = ["name", "_default_value", "_default_factory"]
 
     def __init__(self, name, default_value=NOTHING, default_factory=None):
         if (
@@ -81,22 +81,13 @@ class Attribute(object):
                 "ambiguous."
             )
 
+        self._default_value = NOTHING
+        self._default_factory = None
         self.name = name
         if default_value is not NOTHING:
-            self._default = default_value
+            self._default_value = default_value
         elif default_factory is not None:
             self._default_factory = default_factory
-        else:
-            self._default = NOTHING
-
-    def __getattr__(self, name):
-        """
-        If no value has been set to _default, we need to call a factory.
-        """
-        if name == "_default" and self._default_factory:
-            return self._default_factory()
-        else:
-            raise AttributeError
 
 
 def _ensure_attributes(attrs):
@@ -266,9 +257,10 @@ def with_init(attrs, defaults=None):
         for a in attrs:
             v = kw.pop(a.name, NOTHING)
             if v is NOTHING:
-                # Since ``a._default`` could be a property that calls
-                # a factory, we make this a separate step.
-                v = a._default
+                if a._default_value is not NOTHING:
+                    v = a._default_value
+                elif a._default_factory is not None:
+                    v = a._default_factory()
             if v is NOTHING:
                 raise ValueError(
                     "Missing keyword value for '{0}'.".format(a.name)

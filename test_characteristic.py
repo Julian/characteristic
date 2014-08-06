@@ -20,7 +20,8 @@ class TestAttribute(object):
         """
         a = Attribute("foo")
         assert "foo" == a.name
-        assert NOTHING is a._default
+        assert NOTHING is a._default_value
+        assert None is a._default_factory
 
     def test_init_default_factory(self):
         """
@@ -28,14 +29,15 @@ class TestAttribute(object):
         _default.
         """
         a = Attribute("foo", default_factory=list)
-        assert list() == a._default
+        assert list() == a._default_factory()
+        assert NOTHING is a._default_value
 
     def test_init_default_value(self):
         """
         Instantiating with default_value initializes default properly.
         """
         a = Attribute("foo", default_value="bar")
-        assert "bar" == a._default
+        assert "bar" == a._default_value
 
     def test_ambiguous_defaults(self):
         """
