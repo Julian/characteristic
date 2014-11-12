@@ -325,6 +325,23 @@ class TestReprAttrs(object):
 
         assert "<C(b=2)>" == repr(C(1, 2))
 
+    def test_reprs_are_truncated_if_long(self):
+        """
+        Long attributes are truncated by default.
+        """
+        assert (
+            "<ReprC(a=1, b='222222222222...2222222222222')>" ==
+            repr(ReprC(a=1, b="2" * 1000))
+        )
+
+    def test_custom_repr(self):
+        @with_repr(["a"], repr=repr)
+        class C(object):
+            def __init__(self, a):
+                self.a = a
+
+        assert "<C(a='" + "2" * 1000 + "')>" == repr(C(a="2" * 1000))
+
 
 @with_init([Attribute("a"), Attribute("b")])
 class InitC(object):

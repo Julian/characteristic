@@ -29,7 +29,8 @@ Changes:
 ^^^^^^^^
 
 - All decorators now gracefully accept empty attribute lists. [`22 <https://github.com/hynek/characteristic/pull/22>`_].
-
+- ``repr`` methods will now use :func:`repr.repr` by default, truncating long
+  values by default [`21 <https://github.com/hynek/characteristic/pull/21>`_]
 
 ----
 

@@ -9,6 +9,11 @@ import linecache
 import sys
 import warnings
 
+try:
+    import reprlib
+except ImportError:
+    import repr as reprlib
+
 
 __version__ = "15.0.0-dev"
 __author__ = "Hynek Schlawack"
@@ -341,13 +346,16 @@ def with_cmp(attrs):
     return wrap
 
 
-def with_repr(attrs):
+def with_repr(attrs, repr=reprlib.repr):
     """
     A class decorator that adds a human readable ``__repr__`` method to your
     class using *attrs*.
 
     :param attrs: Attributes to work with.
     :type attrs: ``list`` of :class:`str` or :class:`Attribute`\ s.
+    :param callable repr: the callable which will be expected to coerce each
+        attribute into a suitable repr. If unprovided, :func:`repr.repr` will
+        be used.
     """
     def repr_(self):
         """
