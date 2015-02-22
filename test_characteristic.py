@@ -116,15 +116,13 @@ class TestAttribute(object):
             exclude_from_repr=True,
             exclude_from_immutable=True,
             default_value=42,
-            instance_of=str,
             init_aliaser=None
         )
         assert (
             "<Attribute name='name' exclude_from_cmp=True "
             "exclude_from_init=True exclude_from_repr=True "
             "exclude_from_immutable=True "
-            "default_value=42 default_factory=None instance_of=<{0} 'str'>"
-            " init_aliaser=None>"
+            "default_value=42 default_factory=None init_aliaser=None>"
         ).format("type" if PY2 else "class") == repr(a)
 
     def test_eq_different_types(self):
@@ -144,7 +142,6 @@ class TestAttribute(object):
             "exclude_from_repr": True,
             "exclude_from_immutable": False,
             "default_value": 42,
-            "instance_of": int,
         }
         assert Attribute(**kw) == Attribute(**kw)
 
@@ -159,7 +156,6 @@ class TestAttribute(object):
             "exclude_from_repr": True,
             "exclude_from_immutable": False,
             "default_value": 42,
-            "instance_of": int,
         }
         for arg in kw.keys():
             kw_mutated = dict(**kw)
@@ -492,32 +488,6 @@ class TestWithInit(object):
             pass
         c = C(_a=1)
         assert 1 == c._a
-
-    def test_instance_of_fail(self):
-        """
-        Raise `TypeError` if an Attribute with an `instance_of` is is attempted
-        to be set to a mismatched type.
-        """
-        @with_init([Attribute("a", instance_of=int)])
-        class C(object):
-            pass
-        with pytest.raises(TypeError) as e:
-            C(a="not an int!")
-        assert (
-            "Attribute 'a' must be an instance of 'int'."
-            == e.value.args[0]
-        )
-
-    def test_instance_of_success(self):
-        """
-        Setting an attribute to a value that doesn't conflict with an
-        `instance_of` declaration works.
-        """
-        @with_init([Attribute("a", instance_of=int)])
-        class C(object):
-            pass
-        c = C(a=42)
-        assert 42 == c.a
 
     def test_Attribute_exclude_from_init(self):
         """

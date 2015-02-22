@@ -116,12 +116,6 @@ class Attribute(object):
         Therefore, setting this makes an attribute *optional*.
     :type default_factory: callable
 
-    :param instance_of: If used together with :func:`with_init` (or
-        :func:`attributes` with ``apply_with_init=True``), the passed value is
-        checked whether it's an instance of the type passed here.  The
-        initializer then raises :exc:`TypeError` on mismatch.
-    :type instance_of: type
-
     :param init_aliaser: A callable that is invoked with the name of the
         attribute and whose return value is used as the keyword argument name
         for the ``__init__`` created by :func:`with_init` (or
@@ -136,9 +130,15 @@ class Attribute(object):
     .. versionadded:: 14.0
     """
     __slots__ = [
-        "name", "exclude_from_cmp", "exclude_from_init", "exclude_from_repr",
-        "exclude_from_immutable", "default_value", "default_factory",
-        "instance_of", "init_aliaser", "_kw_name",
+        "name",
+        "exclude_from_cmp",
+        "exclude_from_init",
+        "exclude_from_repr",
+        "exclude_from_immutable",
+        "default_value",
+        "default_factory",
+        "init_aliaser",
+        "_kw_name",
     ]
 
     def __init__(self,
@@ -149,7 +149,6 @@ class Attribute(object):
                  exclude_from_immutable=False,
                  default_value=NOTHING,
                  default_factory=None,
-                 instance_of=None,
                  init_aliaser=strip_leading_underscores):
         if (
                 default_value is not NOTHING
@@ -168,7 +167,6 @@ class Attribute(object):
 
         self.default_value = default_value
         self.default_factory = default_factory
-        self.instance_of = instance_of
 
         self.init_aliaser = init_aliaser
         if init_aliaser is not None:
@@ -186,8 +184,7 @@ class Attribute(object):
             self.exclude_from_repr == other.exclude_from_repr and
             self.exclude_from_immutable == other.exclude_from_immutable and
             self.default_value == other.default_value and
-            self.default_factory == other.default_factory and
-            self.instance_of == other.instance_of
+            self.default_factory == other.default_factory
         )
 
     def __ne__(self, other):
@@ -199,15 +196,15 @@ class Attribute(object):
             "exclude_from_init={exclude_from_init!r} exclude_from_repr="
             "{exclude_from_repr!r} exclude_from_immutable="
             "{exclude_from_immutable!r} default_value={default_value!r} "
-            "default_factory={default_factory!r} instance_of={instance_of!r}"
-            " init_aliaser={init_aliaser!r}>"
+            "default_factory={default_factory!r} "
+            "init_aliaser={init_aliaser!r}>"
         ).format(
             name=self.name, exclude_from_cmp=self.exclude_from_cmp,
             exclude_from_init=self.exclude_from_init,
             exclude_from_repr=self.exclude_from_repr,
             exclude_from_immutable=self.exclude_from_immutable,
             default_value=self.default_value,
-            default_factory=self.default_factory, instance_of=self.instance_of,
+            default_factory=self.default_factory,
             init_aliaser=self.init_aliaser,
         )
 
@@ -591,7 +588,6 @@ def _attrs_to_script(attrs):
     """
     if all(a.default_value is NOTHING
            and a.default_factory is None
-           and a.instance_of is None
            for a in attrs) and not PY26:
         # Simple version does not work with Python 2.6 because of
         # http://bugs.python.org/issue10221
@@ -664,15 +660,4 @@ def _verbose_init(attrs):
                     "    self.{a.name} = attrs[{i}].default_factory()"
                     .format(a=a, i=i)
                 )
-        if a.instance_of:
-            lines.append(
-                "if not isinstance(self.{a.name}, attrs[{i}].instance_of):\n"
-                .format(a=a, i=i)
-            )
-            lines.append(
-                "    raise TypeError(\"Attribute '{a.name}' must be an"
-                " instance of '{type_name}'.\")"
-                .format(a=a, type_name=a.instance_of.__name__)
-            )
-
     return lines
