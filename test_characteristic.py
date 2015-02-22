@@ -120,11 +120,11 @@ class TestAttribute(object):
             init_aliaser=None
         )
         assert (
-            "<Attribute(name='name', exclude_from_cmp=True, "
-            "exclude_from_init=True, exclude_from_repr=True, "
-            "exclude_from_immutable=True, "
-            "default_value=42, default_factory=None, instance_of=<{0} 'str'>,"
-            " init_aliaser=None)>"
+            "<Attribute name='name' exclude_from_cmp=True "
+            "exclude_from_init=True exclude_from_repr=True "
+            "exclude_from_immutable=True "
+            "default_value=42 default_factory=None instance_of=<{0} 'str'>"
+            " init_aliaser=None>"
         ).format("type" if PY2 else "class") == repr(a)
 
     def test_eq_different_types(self):
@@ -311,7 +311,7 @@ class TestReprAttrs(object):
         """
         Test repr returns a sensible value.
         """
-        assert "<ReprC(a=1, b=2)>" == repr(ReprC(1, 2))
+        assert "<ReprC a=1 b=2>" == repr(ReprC(1, 2))
 
     def test_Attribute_exclude_from_repr(self):
         """
@@ -323,14 +323,14 @@ class TestReprAttrs(object):
                 self.a = a
                 self.b = b
 
-        assert "<C(b=2)>" == repr(C(1, 2))
+        assert "<C b=2>" == repr(C(1, 2))
 
     def test_reprs_are_truncated_if_long(self):
         """
         Long attributes are truncated by default.
         """
         assert (
-            "<ReprC(a=1, b='222222222222...2222222222222')>" ==
+            "<ReprC a=1 b='222222222222...2222222222222'>" ==
             repr(ReprC(a=1, b="2" * 1000))
         )
 
@@ -340,7 +340,20 @@ class TestReprAttrs(object):
             def __init__(self, a):
                 self.a = a
 
-        assert "<C(a='" + "2" * 1000 + "')>" == repr(C(a="2" * 1000))
+        assert "<C a='" + "2" * 1000 + "'>" == repr(C(a="2" * 1000))
+
+    def test_no_attributes(self):
+        """
+        The repr for a thing with no attributes does not contain a trailing
+        space.
+
+        """
+
+        @with_repr([])
+        class C(object):
+            pass
+
+        assert "<C>" == repr(C())
 
 
 @with_init([Attribute("a"), Attribute("b")])

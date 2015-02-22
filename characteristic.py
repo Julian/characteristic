@@ -195,12 +195,12 @@ class Attribute(object):
 
     def __repr__(self):
         return (
-            "<Attribute(name={name!r}, exclude_from_cmp={exclude_from_cmp!r}, "
-            "exclude_from_init={exclude_from_init!r}, exclude_from_repr="
-            "{exclude_from_repr!r}, exclude_from_immutable="
-            "{exclude_from_immutable!r}, default_value={default_value!r}, "
-            "default_factory={default_factory!r}, instance_of={instance_of!r},"
-            " init_aliaser={init_aliaser!r})>"
+            "<Attribute name={name!r} exclude_from_cmp={exclude_from_cmp!r} "
+            "exclude_from_init={exclude_from_init!r} exclude_from_repr="
+            "{exclude_from_repr!r} exclude_from_immutable="
+            "{exclude_from_immutable!r} default_value={default_value!r} "
+            "default_factory={default_factory!r} instance_of={instance_of!r}"
+            " init_aliaser={init_aliaser!r}>"
         ).format(
             name=self.name, exclude_from_cmp=self.exclude_from_cmp,
             exclude_from_init=self.exclude_from_init,
@@ -361,11 +361,12 @@ def with_repr(attrs, repr=reprlib.repr):
         """
         Automatically created by characteristic.
         """
-        return "<{0}({1})>".format(
-            self.__class__.__name__,
-            ", ".join(a.name + "=" + repr(getattr(self, a.name))
-                      for a in attrs)
+        attrs_repr = " ".join(
+            a.name + "=" + repr(getattr(self, a.name)) for a in attrs
         )
+        if attrs_repr:
+            attrs_repr = " " + attrs_repr
+        return "<{0.__class__.__name__}{1}>".format(self, attrs_repr)
 
     def wrap(cl):
         cl.__repr__ = repr_
